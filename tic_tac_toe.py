@@ -32,6 +32,16 @@ class Game:
         print('Welcome to Tick Tac Toe!')
         input('Press [Enter] to start')
         self.Board.show()
+        self.results = {'X':0, 'O':0, 'Ties':0}
+        self.num_games = 0
+    
+    def print_stats(self):
+        for winner, num_wins in self.results.items():
+            if winner == 'X' or winner == 'O':
+                print(f'Number of {winner} wins: {num_wins}, Win%: {round(100 * num_wins/self.num_games,2)}%')
+            else:
+                print(f'Number of {winner}: {num_wins}, Tie%: {round(100 * num_wins/self.num_games, 2)}%')
+
     
     def game_over(self):
         replay = input('Play Again? (Y/N)')
@@ -41,12 +51,19 @@ class Game:
             self.game_status = True
         else:
             print('Thanks for playing!')
-        
+            self.print_stats()
+            quit()
+    
+    def track_wins(self, winner):
+        self.num_games += 1
+        self.results[winner] += 1
+
     def check_game_end(self):
         # check for 3 in rows
         for i in range(0, 9, 3):
             if self.Board.values[i] == self.Board.values[i+1] == self.Board.values[i+2]:
                 print(f'Game Over! {self.Board.values[i]} won!')
+                self.track_wins(self.Board.values[i])
                 self.game_status = False
                 self.game_over()
 
@@ -54,23 +71,27 @@ class Game:
         for i in range(3):
             if self.Board.values[i] == self.Board.values[i+3] == self.Board.values[i+6]:
                 print(f'Game Over! {self.Board.values[i]} won!')
+                self.track_wins(self.Board.values[i])
                 self.game_status = False
                 self.game_over()
          
         # check for 3 diagnal
         if self.Board.values[0] == self.Board.values[4] == self.Board.values[8]:
             print(f'Game Over! {self.Board.values[0]} won!')
+            self.track_wins(self.Board.values[0])
             self.game_status = False
             self.game_over()
 
         if self.Board.values[2] == self.Board.values[4] == self.Board.values[6]:
             print(f'Game Over! {self.Board.values[2]} won!')
+            self.track_wins(self.Board.values[2])
             self.game_status = False
             self.game_over()
 
         # check if no spaces left
         if not any([value.isnumeric() for value in self.Board.values]):
             print('Game Tied! No spaces left.')
+            self.track_wins('Ties')
             self.game_status = False
             self.game_over()
 
@@ -89,13 +110,14 @@ class Game:
             if player_input.isnumeric():
                 if int(player_input) > 0 and int(player_input) < 10:
                     try:
-                        self.Board.values[int(player_input) - 1].isnumeric()
-                        self.turn(player_symbol, int(player_input))
-                        break
+                        if self.Board.values[int(player_input) - 1].isnumeric():
+                            self.turn(player_symbol, int(player_input))
+                            break
+                        else:
+                           print('This space has already been chosen. Please choose another space.') 
+                           
                     except IndexError:
                         print('Please enter a number between 1 and 9.')
-                    except:
-                        print('This space has already been chosen. Please choose another space.')
                 else:
                     print('Please enter a number between 1 and 9.')
             else:
@@ -117,17 +139,23 @@ class Game:
         if num_players == 1:
             while self.game_status:
                 # player turn
-                self.player_turn(player1_symbol)
+                try:
+                    self.player_turn(player1_symbol)
+                except:
+                    break
 
                 # CPU turn
-                print('CPU turn...')
-                time.sleep(1.5)
-                
-                # find all spaces that are not taken and randomly choose one of those spaces
-                available_spaces = [space for space in self.Board.values if space.isnumeric()]
-                cpu_choice = random.choice(available_spaces)
+                try:
+                    print('CPU turn...')
+                    time.sleep(1.5)
+                    
+                    # find all spaces that are not taken and randomly choose one of those spaces
+                    available_spaces = [space for space in self.Board.values if space.isnumeric()]
+                    cpu_choice = random.choice(available_spaces)
 
-                self.turn(player2_symbol, int(cpu_choice))
+                    self.turn(player2_symbol, int(cpu_choice))
+                except:
+                    break
         
         # for 2 players
         elif num_players == 2:
